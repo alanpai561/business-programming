@@ -1,0 +1,66 @@
+import random
+
+# 投資事件類別，用於代表股票、房地產、小生意等可投資資產
+class Investment:
+    def __init__(self, type, cost, monthly_cashflow):
+        self.type = type  # 投資種類，例如 "Stock", "RealEstate", "Business"
+        self.cost = cost  # 投資成本（玩家必須支付的現金）
+        self.monthly_cashflow = monthly_cashflow  # 每月為玩家帶來的被動收入
+
+    # 執行投資：扣除現金、增加被動收入、記入資產
+    def execute_investment(self, player):
+        if player.cash >= self.cost:
+            player.cash -= self.cost  # 扣除現金
+            player.passive_income += self.monthly_cashflow  # 增加被動收入
+            player.assets[self.type] = player.assets.get(self.type, 0) + self.cost  # 更新資產紀錄
+            print(f"{player.name} 投資了 {self.type}，成本 {self.cost}，每月增加現金流 {self.monthly_cashflow}")
+        else:
+            print(f"{player.name} 資金不足，無法投資 {self.type}！")
+
+# 貸款事件類別，用於處理玩家申請貸款的情境
+class LoanInvestment:
+    def __init__(self, amount, monthly_repayment):
+        self.type = "Loan"
+        self.amount = amount  # 貸款金額（一次性增加現金）
+        self.monthly_repayment = monthly_repayment  # 每月需還款金額（支出）
+
+    # 將貸款應用至玩家：現金入帳，記入負債表，並增加每月支出
+    def apply_to_player(self, player):
+        player.cash += self.amount  # 增加現金
+        player.liabilities["Loan"] = player.liabilities.get("Loan", 0) + self.amount  # 增加負債
+        player.expenses += self.monthly_repayment  # 每月支出增加
+        print(f"{player.name} 取得貸款 {self.amount}，每月需還款 {self.monthly_repayment}")
+
+# 機會事件牌組：包含投資抽卡與貸款抽卡邏輯
+class ChanceEventDeck:
+    def __init__(self):
+        # 預設的三種可投資項目（可擴充）
+        self.investments = [
+            Investment("Stock", 5000, 500),         # 股票：成本 5000，每月回報 500
+            Investment("RealEstate", 15000, 3000),  # 房地產：成本 15000，每月回報 3000
+            Investment("Business", 50000, 2000)     # 小生意：成本 50000，每月回報 2000
+        ]
+
+    # 隨機抽取一項投資選項
+    def draw_investment(self):
+        return random.choice(self.investments)
+
+    # 根據玩家薪資條件提供對應貸款選項
+    def draw_loan_option(self, player):
+        salary = player.salary
+
+        # 根據薪資級距提供不同貸款額度選擇
+        if salary >= 100000:
+            options = [(50000, 500), (1000000, 8000), (10000000, 30000)]
+        elif salary >= 28000:
+            options = [(50000, 500)]
+        else:
+            options = []
+
+        if not options:
+            print(f"{player.name} 薪資過低，無法借貸。")
+            return None
+
+        # 隨機抽取一筆貸款方案
+        amount, repayment = random.choice(options)
+        return LoanInvestment(amount, repayment)
