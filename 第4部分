@@ -1,0 +1,56 @@
+import random
+
+class Investment:
+    def __init__(self, type, cost, monthly_cashflow):
+        self.type = type  # "Stock", "RealEstate", "Business"
+        self.cost = cost
+        self.monthly_cashflow = monthly_cashflow
+
+    def execute_investment(self, player):
+        if player.cash >= self.cost:
+            player.cash -= self.cost
+            player.passive_income += self.monthly_cashflow
+            player.assets[self.type] = player.assets.get(self.type, 0) + self.cost
+            print(f"{player.name} 投資了 {self.type}，成本 {self.cost}，每月增加現金流 {self.monthly_cashflow}")
+        else:
+            print(f"{player.name} 資金不足，無法投資 {self.type}！")
+
+class LoanInvestment:
+    def __init__(self, amount, monthly_repayment):
+        self.type = "Loan"
+        self.amount = amount
+        self.monthly_repayment = monthly_repayment
+
+    def apply_to_player(self, player):
+        # 將貸款加入現金、增加負債、紀錄每月還款額
+        player.cash += self.amount
+        player.liabilities["Loan"] = player.liabilities.get("Loan", 0) + self.amount
+        player.expenses += self.monthly_repayment
+        print(f"{player.name} 取得貸款 {self.amount}，每月需還款 {self.monthly_repayment}")
+
+class ChanceEventDeck:
+    def __init__(self):
+        self.investments = [
+            Investment("Stock", 5000, 500),
+            Investment("RealEstate", 15000, 3000),
+            Investment("Business", 50000, 2000)
+        ]
+
+    def draw_investment(self):
+        return random.choice(self.investments)
+
+    def draw_loan_option(self, player):
+        salary = player.salary
+        if salary >= 100000:
+            options = [(50000, 500), (1000000, 8000), (10000000, 30000)]
+        elif salary >= 28000:
+            options = [(50000, 500)]
+        else:
+            options = []
+        
+        if not options:
+            print(f"{player.name} 薪資過低，無法借貸。")
+            return None
+
+        amount, repayment = random.choice(options)
+        return LoanInvestment(amount, repayment)
